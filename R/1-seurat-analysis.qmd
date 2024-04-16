@@ -14,8 +14,15 @@ number-sections: true
 fig-cap-location: margin
 css: style.css
 ---
+::: {.callout-note collapse="true"}
+This is a Quarto document which nicely combines both R code, its results and text explanation to enable an easy and interactive access for both learners, readers and supervisors to such analyses. To learn more about Quarto see <https://quarto.org>. By default all code lines are blended, but you can show them by clicking on the code button.
+:::
 
-# Intro
+# Introduction
+
+::: {.callout-tip collapse="true"}
+For more information about Seurat R package please visit a dedicated [documentation](https://satijalab.org/seurat/) page with all details regarding embedded functions and their usage. If you use custom packages in your publications, do not forget to cite them using the information provided at the maintainers web-site.
+:::
 
 ![Seurat is a common R package for comprehensive scRNA-seq analysis](https://satijalab.org/seurat/articles/assets/seurat_banner.jpg)
 
@@ -175,5 +182,5 @@ DimPlot(data, reduction = "umap", group.by = "RNA_snn_res.0.5")
 
 ```{r}
 data
-saveRDS(data, file = "output/Garner.seurat.2exp.liver.mait_analyzed.rds")
+#saveRDS(data, file = "output/Garner.seurat.2exp.liver.mait_analyzed.rds")
 ```
