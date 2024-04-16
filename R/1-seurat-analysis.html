@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ivan Osinnii">
+<meta name="dcterms.date" content="2024-04-15">
+
+<title>Preprocessing scRNA-seq data with Seurat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="1-seurat-analysis_files/libs/clipboard/clipboard.min.js"></script>
+<script src="1-seurat-analysis_files/libs/quarto-html/quarto.js"></script>
+<script src="1-seurat-analysis_files/libs/quarto-html/popper.min.js"></script>
+<script src="1-seurat-analysis_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="1-seurat-analysis_files/libs/quarto-html/anchor.min.js"></script>
+<link href="1-seurat-analysis_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="1-seurat-analysis_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="1-seurat-analysis_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="1-seurat-analysis_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="1-seurat-analysis_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<style>
+
+      .quarto-title-block .quarto-title-banner h1,
+      .quarto-title-block .quarto-title-banner h2,
+      .quarto-title-block .quarto-title-banner h3,
+      .quarto-title-block .quarto-title-banner h4,
+      .quarto-title-block .quarto-title-banner h5,
+      .quarto-title-block .quarto-title-banner h6
+      {
+        color: black;
+      }
+
+      .quarto-title-block .quarto-title-banner {
+        color: black;
+background: #f0f3f5;
+      }
+</style>
+
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Preprocessing scRNA-seq data with Seurat</h1>
+            <p class="subtitle lead">scRNA-seq workflow series part1</p>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Ivan Osinnii </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">April 15, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#intro" id="toc-intro" class="nav-link active" data-scroll-target="#intro"><span class="header-section-number">1</span> Intro</a></li>
+  <li><a href="#loading-data-and-dependencies" id="toc-loading-data-and-dependencies" class="nav-link" data-scroll-target="#loading-data-and-dependencies"><span class="header-section-number">2</span> Loading data and dependencies</a></li>
+  <li><a href="#running-standard-seurat-analysis" id="toc-running-standard-seurat-analysis" class="nav-link" data-scroll-target="#running-standard-seurat-analysis"><span class="header-section-number">3</span> Running standard Seurat analysis</a>
+  <ul class="collapse">
+  <li><a href="#dataset-reduction" id="toc-dataset-reduction" class="nav-link" data-scroll-target="#dataset-reduction"><span class="header-section-number">3.1</span> Dataset reduction</a>
+  <ul class="collapse">
+  <li><a href="#remove-all-assays-except-rna-seq" id="toc-remove-all-assays-except-rna-seq" class="nav-link" data-scroll-target="#remove-all-assays-except-rna-seq"><span class="header-section-number">3.1.1</span> Remove all assays except RNA seq</a></li>
+  <li><a href="#lets-select-only-experiment-2-and-liver-tissue-samples" id="toc-lets-select-only-experiment-2-and-liver-tissue-samples" class="nav-link" data-scroll-target="#lets-select-only-experiment-2-and-liver-tissue-samples"><span class="header-section-number">3.1.2</span> Let’s select only Experiment 2 and liver tissue samples</a></li>
+  </ul></li>
+  <li><a href="#quality-control" id="toc-quality-control" class="nav-link" data-scroll-target="#quality-control"><span class="header-section-number">3.2</span> Quality control</a>
+  <ul class="collapse">
+  <li><a href="#filtering-low-quality-cells-based-on-of-mitochondrial-gene-transcripts" id="toc-filtering-low-quality-cells-based-on-of-mitochondrial-gene-transcripts" class="nav-link" data-scroll-target="#filtering-low-quality-cells-based-on-of-mitochondrial-gene-transcripts"><span class="header-section-number">3.2.1</span> Filtering low-quality cells based on % of mitochondrial gene transcripts</a></li>
+  </ul></li>
+  <li><a href="#proceeding-with-standard-downstream-analysis-steps-to-identify-cell-clusters-and-plot-umap" id="toc-proceeding-with-standard-downstream-analysis-steps-to-identify-cell-clusters-and-plot-umap" class="nav-link" data-scroll-target="#proceeding-with-standard-downstream-analysis-steps-to-identify-cell-clusters-and-plot-umap"><span class="header-section-number">3.3</span> Proceeding with standard downstream analysis steps to identify cell clusters and plot UMAP</a>
+  <ul class="collapse">
+  <li><a href="#normalize-data-and-find-variably-expressed-genes" id="toc-normalize-data-and-find-variably-expressed-genes" class="nav-link" data-scroll-target="#normalize-data-and-find-variably-expressed-genes"><span class="header-section-number">3.3.1</span> Normalize data and find variably expressed genes</a></li>
+  <li><a href="#identify-the-10-most-highly-variable-genes" id="toc-identify-the-10-most-highly-variable-genes" class="nav-link" data-scroll-target="#identify-the-10-most-highly-variable-genes"><span class="header-section-number">3.3.2</span> Identify the 10 most highly variable genes</a></li>
+  <li><a href="#scaling" id="toc-scaling" class="nav-link" data-scroll-target="#scaling"><span class="header-section-number">3.3.3</span> Scaling</a></li>
+  <li><a href="#perform-linear-dimensionality-reduction" id="toc-perform-linear-dimensionality-reduction" class="nav-link" data-scroll-target="#perform-linear-dimensionality-reduction"><span class="header-section-number">3.3.4</span> Perform Linear dimensionality reduction</a></li>
+  <li><a href="#visualize-pca-results" id="toc-visualize-pca-results" class="nav-link" data-scroll-target="#visualize-pca-results"><span class="header-section-number">3.3.5</span> Visualize PCA results</a></li>
+  <li><a href="#determine-dimensionality-of-the-data" id="toc-determine-dimensionality-of-the-data" class="nav-link" data-scroll-target="#determine-dimensionality-of-the-data"><span class="header-section-number">3.3.6</span> Determine dimensionality of the data</a></li>
+  <li><a href="#clustering" id="toc-clustering" class="nav-link" data-scroll-target="#clustering"><span class="header-section-number">3.3.7</span> Clustering</a></li>
+  <li><a href="#create-the-umap-map" id="toc-create-the-umap-map" class="nav-link" data-scroll-target="#create-the-umap-map"><span class="header-section-number">3.3.8</span> Create the UMAP map</a></li>
+  <li><a href="#save-our-analyzed-seurat-object-for-downstream-analyses" id="toc-save-our-analyzed-seurat-object-for-downstream-analyses" class="nav-link" data-scroll-target="#save-our-analyzed-seurat-object-for-downstream-analyses"><span class="header-section-number">3.3.9</span> Save our analyzed Seurat object for downstream analyses</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content quarto-banner-title-block page-columns page-full" id="quarto-document-content">
+
+
+
+
+<section id="intro" class="level1 page-columns page-full" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Intro</h1>
+<div class="quarto-figure quarto-figure-center page-columns page-full">
+<figure class="figure page-columns page-full">
+<p><img src="https://satijalab.org/seurat/articles/assets/seurat_banner.jpg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption margin-caption">Seurat is a common R package for comprehensive scRNA-seq analysis</figcaption>
+</figure>
+</div>
+<p>This is a basic Seurat analysis of scRNA-seq data downstream of CellRanger pipeline. The reference paper authors previously assembled feature count matrix, metadata and row data Seurat object and uploaded it on <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE238137">GEO repository</a>. Analysis in this document is required before annotating specific cell types and analyzing differential gene expression. We aim to have dimensionality reduction data like tSNE or UMAP available for visualizing results further. This analysis was taken from a <a href="https://youtu.be/5HBzgsz8qyk?si=YblbjRmzN3saHv-P">youtube tutorial</a> almost without modifications, but using current dataset.</p>
+</section>
+<section id="loading-data-and-dependencies" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Loading data and dependencies</h1>
+<p>For this analysis we need <em>Seurat</em> and <em>tidyverse</em> packages</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Seurat)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Loading our dataset</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data.initial <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"input/GSE238137_blood-liver_MAIT-Tmem_seurat.rds"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>data.initial</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class Seurat 
+39947 features across 89456 samples within 5 assays 
+Active assay: SCT (17646 features, 0 variable features)
+ 3 layers present: counts, data, scale.data
+ 4 other assays present: RNA, ADT, HTO, integrated
+ 2 dimensional reductions calculated: pca, umap</code></pre>
+</div>
+</div>
+</section>
+<section id="running-standard-seurat-analysis" class="level1 page-columns page-full" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Running standard Seurat analysis</h1>
+<section id="dataset-reduction" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="dataset-reduction"><span class="header-section-number">3.1</span> Dataset reduction</h2>
+<p>Let’s reduce our seurat object until desired cell populations and assays</p>
+<section id="remove-all-assays-except-rna-seq" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="remove-all-assays-except-rna-seq"><span class="header-section-number">3.1.1</span> Remove all assays except RNA seq</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">DefaultAssay</span>(data.initial) <span class="ot">&lt;-</span> <span class="st">"RNA"</span> <span class="co"># to allow other assay layers to be deleted</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data.initial <span class="ot">&lt;-</span>  <span class="fu">DietSeurat</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  data.initial,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">features =</span> <span class="cn">NULL</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">assays =</span> <span class="st">"RNA"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">dimreducs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">graphs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">misc =</span> <span class="cn">TRUE</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="lets-select-only-experiment-2-and-liver-tissue-samples" class="level3" data-number="3.1.2">
+<h3 data-number="3.1.2" class="anchored" data-anchor-id="lets-select-only-experiment-2-and-liver-tissue-samples"><span class="header-section-number">3.1.2</span> Let’s select only Experiment 2 and liver tissue samples</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data.mait.Tmem<span class="fl">.2</span>exp <span class="ot">&lt;-</span> data.initial[, data.initial<span class="sc">$</span>experiment <span class="sc">==</span> <span class="st">"Exp 2"</span>] </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>data.liver.mait.Tmem<span class="fl">.2</span>exp <span class="ot">&lt;-</span> data.mait.Tmem<span class="fl">.2</span>exp[, data.mait.Tmem<span class="fl">.2</span>exp<span class="sc">$</span>tissue <span class="sc">==</span> <span class="st">"Liver"</span>] </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>data.liver.mait.Tmem<span class="fl">.2</span>exp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class Seurat 
+19289 features across 17069 samples within 1 assay 
+Active assay: RNA (19289 features, 0 variable features)
+ 2 layers present: counts, data</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="quality-control" class="level2 page-columns page-full" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="quality-control"><span class="header-section-number">3.2</span> Quality control</h2>
+<section id="filtering-low-quality-cells-based-on-of-mitochondrial-gene-transcripts" class="level3 page-columns page-full" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="filtering-low-quality-cells-based-on-of-mitochondrial-gene-transcripts"><span class="header-section-number">3.2.1</span> Filtering low-quality cells based on % of mitochondrial gene transcripts</h3>
+<p>Let’s first calculate the percentage of mitochondrial gene transcripts using build-in Seurat function</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data.liver.mait.Tmem<span class="fl">.2</span>exp[[<span class="st">"percent.mt"</span>]] <span class="ot">&lt;-</span> <span class="fu">PercentageFeatureSet</span>(data.liver.mait.Tmem<span class="fl">.2</span>exp, <span class="at">pattern =</span> <span class="st">"^MT-"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Idents</span>(data.liver.mait.Tmem<span class="fl">.2</span>exp) <span class="ot">&lt;-</span> data.liver.mait.Tmem<span class="fl">.2</span>exp<span class="sc">$</span>cell_type</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Plotting Violin plot showing all information about QC metrics</p>
+<div class="cell page-columns page-full">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">VlnPlot</span>(data.liver.mait.Tmem<span class="fl">.2</span>exp, <span class="at">features =</span> <span class="fu">c</span>(<span class="st">"nFeature_RNA"</span>, <span class="st">"nCount_RNA"</span>, <span class="st">"percent.mt"</span>), <span class="at">ncol =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display page-columns page-full">
+<div class="quarto-figure quarto-figure-center page-columns page-full">
+<figure class="figure page-columns page-full">
+<p><img src="1-seurat-analysis_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption margin-caption">We can see that the overall amount of cells with mito DNA % &gt; 5 is very small indicating high quality of cell transcriptomes contained in the dataset. One of the main reasons to exclude cells with an unusually high number of detected genes is the suspicion that such cells might actually be doublets or multiplets. Doublets occur when two cells are mistakenly captured as a single cell during the cell isolation process. This results in a higher total gene count than typically observed in single cells because the transcriptomes of two (or more) cells are combined</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>And FeatureScatter plot</p>
+<div class="cell page-columns page-full">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">FeatureScatter</span>(data.liver.mait.Tmem<span class="fl">.2</span>exp, <span class="at">feature1 =</span> <span class="st">"nCount_RNA"</span>, <span class="at">feature2 =</span> <span class="st">"nFeature_RNA"</span>) <span class="sc">+</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">'lm'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display page-columns page-full">
+<div class="quarto-figure quarto-figure-center page-columns page-full">
+<figure class="figure page-columns page-full">
+<p><img src="1-seurat-analysis_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption margin-caption">This plot ensures that there are little cells with uncorrelated transcripts rate identification and the total number of RNA counts</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>In our case the authors already performed QC filtering, so we skip this step.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data.liver.mait.Tmem.2exp &lt;- subset(Garner.Trem.2exp, subset = nFeature_RNA &gt; 200 &amp; nFeature_RNA &lt; 2500 &amp; percent.mt &lt; 5)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<hr>
+</section>
+</section>
+<section id="proceeding-with-standard-downstream-analysis-steps-to-identify-cell-clusters-and-plot-umap" class="level2 page-columns page-full" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="proceeding-with-standard-downstream-analysis-steps-to-identify-cell-clusters-and-plot-umap"><span class="header-section-number">3.3</span> Proceeding with standard downstream analysis steps to identify cell clusters and plot UMAP</h2>
+<section id="normalize-data-and-find-variably-expressed-genes" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="normalize-data-and-find-variably-expressed-genes"><span class="header-section-number">3.3.1</span> Normalize data and find variably expressed genes</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>data.liver.mait.Tmem<span class="fl">.2</span>exp[[<span class="st">"RNA"</span>]]<span class="sc">@</span>meta.features <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row.names =</span> <span class="fu">rownames</span>(data.liver.mait.Tmem<span class="fl">.2</span>exp[[<span class="st">"RNA"</span>]])) <span class="co"># Assign to Seurat objects rownames correctly</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">NormalizeData</span>(data.liver.mait.Tmem<span class="fl">.2</span>exp) </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">FindVariableFeatures</span>(data)     </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="identify-the-10-most-highly-variable-genes" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="identify-the-10-most-highly-variable-genes"><span class="header-section-number">3.3.2</span> Identify the 10 most highly variable genes</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>top10 <span class="ot">&lt;-</span> <span class="fu">head</span>(<span class="fu">VariableFeatures</span>(data), <span class="dv">10</span>) </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>top10</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "HSPA6"  "HSPA1A" "CCL20"  "HSPA1B" "CCL4L2" "GNLY"   "CCL3L1" "CCL3"  
+ [9] "EGR1"   "XCL1"  </code></pre>
+</div>
+</div>
+</section>
+<section id="scaling" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="scaling"><span class="header-section-number">3.3.3</span> Scaling</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>all.genes <span class="ot">&lt;-</span> <span class="fu">rownames</span>(data)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">ScaleData</span>(data, <span class="at">features =</span> all.genes)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+</div>
+</section>
+<section id="perform-linear-dimensionality-reduction" class="level3" data-number="3.3.4">
+<h3 data-number="3.3.4" class="anchored" data-anchor-id="perform-linear-dimensionality-reduction"><span class="header-section-number">3.3.4</span> Perform Linear dimensionality reduction</h3>
+</section>
+<section id="visualize-pca-results" class="level3" data-number="3.3.5">
+<h3 data-number="3.3.5" class="anchored" data-anchor-id="visualize-pca-results"><span class="header-section-number">3.3.5</span> Visualize PCA results</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(data[[<span class="st">"pca"</span>]], <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="at">nfeatures =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>PC_ 1 
+Positive:  HLA-DRB1, GZMH, XCL2, HLA-DPA1, ARID5B 
+Negative:  KLRB1, IL7R, SLC4A10, CEBPD, RORA 
+PC_ 2 
+Positive:  NR4A2, ACTB, DUSP2, IER2, PPP1R15A 
+Negative:  MT-ND3, HLA-G, MT-CYB, FTH1, PDE3B 
+PC_ 3 
+Positive:  METRNL, PPP2R5C, FAM177A1, TUBB4B, VPS37B 
+Negative:  RPS26, TXNIP, MYL12A, ANXA1, CD52 
+PC_ 4 
+Positive:  DUSP4, COTL1, ZFP36, ATP1B3, ALOX5AP 
+Negative:  NKG7, FGFBP2, FCGR3A, GZMB, GNLY 
+PC_ 5 
+Positive:  JUND, ZFP36, DUSP2, MAFF, PPP1R15A 
+Negative:  SAMSN1, ARRDC3, MALAT1, GLIPR1, ITK </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">DimHeatmap</span>(data, <span class="at">dims =</span> <span class="dv">1</span>, <span class="at">cells =</span> <span class="dv">500</span>, <span class="at">balanced =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="1-seurat-analysis_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="determine-dimensionality-of-the-data" class="level3 page-columns page-full" data-number="3.3.6">
+<h3 data-number="3.3.6" class="anchored" data-anchor-id="determine-dimensionality-of-the-data"><span class="header-section-number">3.3.6</span> Determine dimensionality of the data</h3>
+<div class="cell page-columns page-full">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ElbowPlot</span>(data) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display page-columns page-full">
+<div class="quarto-figure quarto-figure-center page-columns page-full">
+<figure class="figure page-columns page-full">
+<p><img src="1-seurat-analysis_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption margin-caption">Elbow plot is also sometimes called scree plot. After certain number of PCA captured variation is expected to drop down. Since subsequent PCAs are less informative, this sudden drop resembles elbow shape</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="clustering" class="level3" data-number="3.3.7">
+<h3 data-number="3.3.7" class="anchored" data-anchor-id="clustering"><span class="header-section-number">3.3.7</span> Clustering</h3>
+<p>Visualize PCA plot with clusters</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(data, <span class="at">reduction =</span> <span class="st">"pca"</span>, <span class="at">group.by =</span> <span class="st">"RNA_snn_res.0.5"</span>, <span class="at">label =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="1-seurat-analysis_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Idents</span>(data) <span class="ot">&lt;-</span> <span class="st">"RNA_snn_res.0.5"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="create-the-umap-map" class="level3" data-number="3.3.8">
+<h3 data-number="3.3.8" class="anchored" data-anchor-id="create-the-umap-map"><span class="header-section-number">3.3.8</span> Create the UMAP map</h3>
+<p>Plot UMAP to visualize clusters spatial distribution</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(data, <span class="at">reduction =</span> <span class="st">"umap"</span>, <span class="at">group.by =</span> <span class="st">"RNA_snn_res.0.5"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="1-seurat-analysis_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="save-our-analyzed-seurat-object-for-downstream-analyses" class="level3" data-number="3.3.9">
+<h3 data-number="3.3.9" class="anchored" data-anchor-id="save-our-analyzed-seurat-object-for-downstream-analyses"><span class="header-section-number">3.3.9</span> Save our analyzed Seurat object for downstream analyses</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class Seurat 
+19289 features across 17069 samples within 1 assay 
+Active assay: RNA (19289 features, 2000 variable features)
+ 3 layers present: counts, data, scale.data
+ 2 dimensional reductions calculated: pca, umap</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(data, <span class="at">file =</span> <span class="st">"output/Garner.seurat.2exp.liver.mait_analyzed.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

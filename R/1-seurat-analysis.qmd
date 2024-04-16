@@ -1,0 +1,179 @@
+---
+title: "Preprocessing scRNA-seq data with Seurat"
+subtitle: "scRNA-seq workflow series part1" 
+title-block-banner: "#f0f3f5"
+title-block-banner-color: "black"
+author: "Ivan Osinnii"
+date: "15 April 2024"
+format: html
+code-fold: true
+editor: visual
+toc: true
+toc-location: left
+number-sections: true
+fig-cap-location: margin
+css: style.css
+---
+
+# Intro
+
+![Seurat is a common R package for comprehensive scRNA-seq analysis](https://satijalab.org/seurat/articles/assets/seurat_banner.jpg)
+
+This is a basic Seurat analysis of scRNA-seq data downstream of CellRanger pipeline. The reference paper authors previously assembled feature count matrix, metadata and row data Seurat object and uploaded it on [GEO repository](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE238137). Analysis in this document is required before annotating specific cell types and analyzing differential gene expression. We aim to have dimensionality reduction data like tSNE or UMAP available for visualizing results further. This analysis was taken from a [youtube tutorial](https://youtu.be/5HBzgsz8qyk?si=YblbjRmzN3saHv-P) almost without modifications, but using current dataset.
+
+# Loading data and dependencies
+
+For this analysis we need *Seurat* and *tidyverse* packages
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE}
+library(Seurat)
+library(tidyverse)
+```
+
+Loading our dataset
+
+```{r}
+data.initial <- readRDS("input/GSE238137_blood-liver_MAIT-Tmem_seurat.rds")
+data.initial
+```
+
+# Running standard Seurat analysis
+
+## Dataset reduction
+
+Let's reduce our seurat object until desired cell populations and assays
+
+### Remove all assays except RNA seq
+
+```{r}
+DefaultAssay(data.initial) <- "RNA" # to allow other assay layers to be deleted
+
+data.initial <-  DietSeurat(
+  data.initial,
+  features = NULL,
+  assays = "RNA",
+  dimreducs = NULL,
+  graphs = NULL,
+  misc = TRUE) 
+```
+
+### Let's select only Experiment 2 and liver tissue samples
+
+```{r}
+data.mait.Tmem.2exp <- data.initial[, data.initial$experiment == "Exp 2"] 
+
+data.liver.mait.Tmem.2exp <- data.mait.Tmem.2exp[, data.mait.Tmem.2exp$tissue == "Liver"] 
+data.liver.mait.Tmem.2exp
+```
+
+## Quality control
+
+### Filtering low-quality cells based on % of mitochondrial gene transcripts
+
+Let's first calculate the percentage of mitochondrial gene transcripts using build-in Seurat function
+
+```{r}
+data.liver.mait.Tmem.2exp[["percent.mt"]] <- PercentageFeatureSet(data.liver.mait.Tmem.2exp, pattern = "^MT-")
+Idents(data.liver.mait.Tmem.2exp) <- data.liver.mait.Tmem.2exp$cell_type
+```
+
+Plotting Violin plot showing all information about QC metrics
+
+```{r, fig.cap= "We can see that the overall amount of cells with mito DNA % > 5 is very small indicating high quality of cell transcriptomes contained in the dataset. One of the main reasons to exclude cells with an unusually high number of detected genes is the suspicion that such cells might actually be doublets or multiplets. Doublets occur when two cells are mistakenly captured as a single cell during the cell isolation process. This results in a higher total gene count than typically observed in single cells because the transcriptomes of two (or more) cells are combined"}
+VlnPlot(data.liver.mait.Tmem.2exp, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+```
+
+And FeatureScatter plot
+
+```{r, fig.cap= "This plot ensures that there are little cells with uncorrelated transcripts rate identification and the total number of RNA counts"}
+FeatureScatter(data.liver.mait.Tmem.2exp, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") +
+  geom_smooth(method = 'lm')
+```
+
+In our case the authors already performed QC filtering, so we skip this step.
+
+```{r}
+# data.liver.mait.Tmem.2exp <- subset(Garner.Trem.2exp, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5)
+```
+
+------------------------------------------------------------------------
+
+## Proceeding with standard downstream analysis steps to identify cell clusters and plot UMAP
+
+### Normalize data and find variably expressed genes
+
+```{r}
+data.liver.mait.Tmem.2exp[["RNA"]]@meta.features <- data.frame(row.names = rownames(data.liver.mait.Tmem.2exp[["RNA"]])) # Assign to Seurat objects rownames correctly
+data <- NormalizeData(data.liver.mait.Tmem.2exp) 
+data <- FindVariableFeatures(data)     
+```
+
+### Identify the 10 most highly variable genes
+
+```{r}
+top10 <- head(VariableFeatures(data), 10) 
+top10
+```
+
+### Scaling
+
+```{r}
+all.genes <- rownames(data)
+data <- ScaleData(data, features = all.genes)
+```
+
+### Perform Linear dimensionality reduction
+
+```{r, include=FALSE}
+data <- RunPCA(data, features = VariableFeatures(object = data))
+```
+
+### Visualize PCA results
+
+```{r}
+print(data[["pca"]], dims = 1:5, nfeatures = 5)
+DimHeatmap(data, dims = 1, cells = 500, balanced = TRUE)
+```
+
+### Determine dimensionality of the data
+
+```{r,fig.cap= "Elbow plot is also sometimes called scree plot. After certain number of PCA captured variation is expected to drop down. Since subsequent PCAs are less informative, this sudden drop resembles elbow shape"}
+ElbowPlot(data) 
+```
+
+### Clustering
+
+```{r, include=FALSE}
+data <- FindNeighbors(data, dims = 1:20)
+
+data <- FindClusters(data, resolution = c(0.1,0.3, 0.5, 0.7, 1)) 
+```
+
+Visualize PCA plot with clusters
+
+```{r}
+DimPlot(data, reduction = "pca", group.by = "RNA_snn_res.0.5", label = TRUE)
+Idents(data) <- "RNA_snn_res.0.5"
+```
+
+### Create the UMAP map
+
+```{r, include=FALSE}
+set.seed(5) 
+
+data <- RunUMAP(data, dims = 1:20)
+```
+
+Plot UMAP to visualize clusters spatial distribution
+
+```{r}
+DimPlot(data, reduction = "umap", group.by = "RNA_snn_res.0.5")
+
+```
+
+### Save our analyzed Seurat object for downstream analyses
+
+```{r}
+data
+saveRDS(data, file = "output/Garner.seurat.2exp.liver.mait_analyzed.rds")
+```

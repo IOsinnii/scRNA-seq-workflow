@@ -1,0 +1,142 @@
+---
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+# Load data and dependencies
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE}
+library(SingleCellExperiment)
+library(SingleR)
+library(ggplot2)
+library(RColorBrewer)
+library(tidyverse)
+library(scuttle)
+library(scran)
+library(scater)
+library(uwot)
+```
+
+
+
+```{r}
+
+getwd()
+lett.sce <- readRDS("./input/lett.liver.sce.withSYMBOL_analyzed.rds")
+```
+
+## Extract count matrix from sce object for query data
+
+
+```{r}
+query <- assay(lett.sce) 
+````
+
+```{r}
+ref <- celldex::MonacoImmuneData()
+````
+
+```{r}
+pred <- SingleR(test = query, ref = ref, labels = ref$label.fine)
+````
+# Annotation "QC" plots
+```{r}
+pred$scores[7:9,7:9] 
+````
+
+```{r}
+plotScoreHeatmap(pred)
+````
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE}
+plotDeltaDistribution(pred)
+````
+
+```{r}
+lett.sce$singleR.labels.fine <- pred$labels[match(rownames(lett.sce@colData),
+rownames(pred))] 
+
+plotUMAP(lett.sce, colour_by = 'singleR.labels.fine',
+point_size = 1.0)
+````
+
+
+tab <- table(Assigned=pred3$labels, Clusters=lett.sce$label) 
+tab
+
+pheatmap(log10(tab+10), color = colorRampPalette(c('white','blue'))(10))
+
+
+if (!"UMAP" %in% reducedDimNames(lett.sce)) {
+set.seed(42) # for reproducibility 
+lett.sce <- lett.sce(lett.sce, dimred = "PCA") }
+
+#### Use ifelse function to create a new factor vector with only MAIT label and "others"
+
+```{r}
+cell_type_of_interest <- "MAIT cells"
+
+MAIT_cells <- ifelse(lett.sce@colData@listData[["singleR.labels.fine"]] == cell_type_of_interest, cell_type_of_interest, "All other")
+
+colData(lett.sce)$MAIT_cells <- factor(MAIT_cells)
+
+colors <- c("MAIT cells" = "red", "All other" = "lightgrey")
+
+p <- plotReducedDim(lett.sce, "UMAP", colour_by = "MAIT_cells",
+point_size = 1,  + scale_colour_manual(values = colors) 
+
+print(p)
+```
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE}
+ref2 <- readRDS("./input/Garner.seurat.liver.blood.withTrm.rds")
+````
+
+# Extract count matrix from seurat object for ref data
+
+
+```{r}
+ref2 <-  GetAssayData(ref2, assay = "RNA")
+````
+
+```{r}
+common_genes <- intersect(rownames(lett.sce), rownames(ref2))
+length(common_genes)
+# Subset lett.sce to include only common genes
+lett.sce <- lett.sce[common_genes, ]
+````
+
+
+```{r}
+# Subset garner.sce to include only common genes
+lett.sce <- lett.sce[common_genes, ]
+````
+
+
+```{r}
+pred2 <- SingleR(test = query, ref = ref2, labels = ref$cell_type)
+````
+# Annotation "QC" plots
+```{r}
+pred$scores[7:9,7:9] 
+````
+
+```{r}
+plotScoreHeatmap(pred)
+````
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE}
+plotDeltaDistribution(pred)
+````
+
+```{r}
+lett.sce$singleR.labels.fine <- pred$labels[match(rownames(lett.sce@colData),
+rownames(pred))] 
+
+plotUMAP(lett.sce, colour_by = 'singleR.labels.fine',
+point_size = 1.0)
+
+```{r}
+
+````
