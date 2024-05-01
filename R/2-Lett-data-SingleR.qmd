@@ -14,15 +14,19 @@ number-sections: true
 fig-cap-location: bottom
 css: style.css
 ---
+::: {.callout-note collapse="true"}
+This is a Quarto document which nicely combines both R code, its results and text explanation to enable an easy and interactive access for both learners, readers and supervisors to such analyses. To learn more about Quarto see <https://quarto.org>. By default all code lines are blended, but you can show them by clicking on the code button.
+:::
+
 # Introduction
 
 In previous analyses we prepared our datasets in terms of data normalization and UMAP projection. We also tried a simple case of MAIT cell annotation taking well-annotated Garner et al. dataset as a query and MonacoImmuneData database as reference.
 
-Here we take preprocessed data: both Lett experiment (liver cell subset) and Garner et al. dataset preprocessed and filtered (for liver tissue and experiment 2). And we try to:  
-1) Project  MonacoImmuneData MAIT cell labels on Lett dataset;  
+Here we take preprocessed data: both Lett experiment (liver cell subset) and Garner et al. dataset preprocessed and filtered (for liver tissue and experiment 2). And we try to:\
+1) Project MonacoImmuneData MAIT cell labels on Lett dataset;\
 2) Project Garner et al. dataset MAIT cell label on Lett dataset
 
-In this way we want to be sure that if one of the methods shows some result - it is not due to the batch effect and other types of artefacts, or at least, it is not completely biased towards batch effect or whatever else - donor variability etc. 
+In this way we want to be sure that if one of the methods shows some result - it is not due to the batch effect and other types of artefacts, or at least, it is not completely biased towards batch effect or whatever else - donor variability etc.
 
 Also, we want to make exact counts of MAIT cells in Lett dataset.
 
@@ -45,7 +49,7 @@ library(celldex)
 ```
 
 ```{r, warning= FALSE, message= FALSE, echo= TRUE}
-lett.sce <- readRDS("./input/Lett.sce.liver.gene.symbol_analyzed.rds")
+lett.sce <- readRDS("./../input/Lett.sce.liver.gene.symbol_analyzed.rds")
 lett.sce
 
 lett.sce$cellReferences_celldex_MonacoImmuneData <- lett.sce@colData@listData[["cellReferences_celldex_MonacoImmuneData"]]@listData[["labels"]]
@@ -78,6 +82,7 @@ pred.Tcell <- SingleR(test = query, ref = ref, labels = ref$label.main)
 ```{r}
 pred$scores[7:9,7:9] 
 ```
+
 Just scores for each cell type
 
 ```{r,fig.height= 6, fig.width= 8}
@@ -92,10 +97,9 @@ plotDeltaDistribution(pred)
 
 This complex graph shows the rate of false-positives. Nothing important to mention so far.
 
-### We make the projection of all MonacoImmuneData cell types on Lett dataset 
+### We make the projection of all MonacoImmuneData cell types on Lett dataset
 
-UMAP plot showing all 29 fine cell types including MAIT projected on our dataset. 
-Unfortunately the legend is so small that we can not clearly see how MAITs are designated 
+UMAP plot showing all 29 fine cell types including MAIT projected on our dataset. Unfortunately the legend is so small that we can not clearly see how MAITs are designated
 
 ```{r, warning=FALSE, fig.height= 8, fig.width= 10}
 lett.sce$singleR.labels.fine <- pred$labels[match(rownames(lett.sce@colData),
@@ -105,7 +109,7 @@ plotUMAP(lett.sce, colour_by = 'singleR.labels.fine',
 point_size = 1.0)
 ```
 
-That is why we will produce additional plots below. 
+That is why we will produce additional plots below.
 
 ```{r, warning=FALSE, fig.height= 8, fig.width= 10}
 tab <- table(Assigned=pred$labels, Clusters=lett.sce$cellReferences_celldex_MonacoImmuneData) 
@@ -133,7 +137,7 @@ p <- plotReducedDim(lett.sce, "UMAP", colour_by = "MAIT_cells", point_size = 1) 
 print(p)
 ```
 
-So we see our MAIT cells very nicely among others. 
+So we see our MAIT cells very nicely among others.
 
 ### MAIT cell counts compared to total T cells
 
@@ -159,6 +163,7 @@ message("Number of MAIT cells equals ", value_counts[2])
 message("Number of all T cells equals ", t_cell_counts)
 message("Persentage of MAIT cells out of all T cells found with this method of annotation equals ", percent1)
 ```
+
 ### Conclusion: 10.5 MAIT cells out of all T cells in liver
 
 # Analysis with SingleR and Garner et al. reference
@@ -166,7 +171,7 @@ message("Persentage of MAIT cells out of all T cells found with this method of a
 Let's load the new reference data which we saved from previous Seurat analysis
 
 ```{r}
-ref2 = readRDS("output/Garner.seurat.2exp.liver.mait_analyzed.rds")
+ref2 = readRDS("./../output/Garner.seurat.2exp.liver.mait_analyzed.rds")
 ```
 
 This command would be needed to convert reference from Seurat to SCE, but we can avoid it
@@ -221,15 +226,18 @@ pred2 <- SingleR(test = query, ref = ref_se_object, labels = ref_se_object$cell_
 ### Annotation "QC" plots
 
 We see here that MAIT are annotated with very high score, and there is minimal similarity between Tmem and MAIT in our dataset. But "Other" cells have significant similarity with both MAIT and Tmem
+
 ```{r, warning= FALSE, message= FALSE, echo= TRUE}
 plotScoreHeatmap(pred2)
 ```
+
 There seems to be no false positives
+
 ```{r, warning= FALSE, message= FALSE, echo= TRUE}
 plotDeltaDistribution(pred2)
 ```
 
-### We make UMAP projection of Garner et al. cell types on Lett dataset 
+### We make UMAP projection of Garner et al. cell types on Lett dataset
 
 It looks simple. We see MAIT likely in the same position as in previous projection model, but they seem to be a little bit less now
 
@@ -266,6 +274,6 @@ message("Number of all T cells equals ", t_cell_counts)
 message("Persentage of MAIT cells out of all T cells found with this method of annotation equals ", percent2)
 ```
 
+### Conclusion
 
-### Conclusion 
 It seems that we identified the position of our MAIT cells correctly, since two independent dataset projections make very similar result. Using Garner dataset we get slightly less cells identified as MAIT. There might be different reasons for this. Perhaps, batch effect is one of them.

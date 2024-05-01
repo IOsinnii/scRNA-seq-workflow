@@ -14,6 +14,7 @@ number-sections: true
 fig-cap-location: margin
 css: style.css
 ---
+
 ::: {.callout-note collapse="true"}
 This is a Quarto document which nicely combines both R code, its results and text explanation to enable an easy and interactive access for both learners, readers and supervisors to such analyses. To learn more about Quarto see <https://quarto.org>. By default all code lines are blended, but you can show them by clicking on the code button.
 :::
@@ -40,7 +41,7 @@ library(tidyverse)
 Loading our dataset
 
 ```{r}
-data.initial <- readRDS("input/GSE238137_blood-liver_MAIT-Tmem_seurat.rds")
+data.initial <- readRDS("./../input/GSE238137_blood-liver_MAIT-Tmem_seurat.rds")
 data.initial
 ```
 
@@ -182,5 +183,5 @@ DimPlot(data, reduction = "umap", group.by = "RNA_snn_res.0.5")
 
 ```{r}
 data
-#saveRDS(data, file = "output/Garner.seurat.2exp.liver.mait_analyzed.rds")
+#saveRDS(data, file = "./../output/Garner.seurat.2exp.liver.mait_analyzed.rds")
 ```

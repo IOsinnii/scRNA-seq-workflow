@@ -1,0 +1,127 @@
+---
+title: "Manual MAIT cell annotation in Lett dataset using AUCell package and Garner et al gene set intersection with Zheng et al"
+subtitle: "scRNA-seq workflow series part4" 
+title-block-banner: "#f0f3f5"
+title-block-banner-color: "black"
+author: "Ivan Osinnii"
+date: "18 April 2024"
+format: html
+code-fold: true
+editor: visual
+toc: true
+toc-location: left
+number-sections: true
+fig-cap-location: bottom
+css: style.css
+---
+# Introduction
+
+
+
+# Load data and dependencies
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE}
+getwd()
+library(SingleCellExperiment)
+library(SummarizedExperiment)
+library(RSQLite)
+library(AUCell)
+library(ggplot2)
+library(RColorBrewer)
+library(tidyverse)
+library(readxl)
+library(scater)
+library(uwot)
+library(GSEABase)
+```
+
+### Load previously processed Lett dataset, check how cell look like on UMAP
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE, fig.height= 6, fig.width= 8}
+getwd()
+
+lett.sce <- readRDS("./../input/Lett.sce.liver.gene.symbol_analyzed.rds")
+
+lett.sce$MonacoImmuneData <- lett.sce@colData@listData[["cellReferences_celldex_MonacoImmuneData"]]@listData[["labels"]]
+
+plotUMAP(lett.sce, colour_by = 'MonacoImmuneData',point_size = 1.0)
+```
+
+### Load the list of MAIT marker genes
+
+```{r}
+genes <-read_excel("./../input/CellMarkerMAITcells.xlsx", sheet = 2, col_names = TRUE) ## Garner list intersection with Zheng list
+
+```
+
+# Analysis
+
+### Transform MAIT marker list into GeneSet object using GSEABase functions
+
+```{r}
+all.sets <- lapply(names(genes), function(x) {
+  GeneSet(genes[[x]], setName=x)        
+})
+all.sets <- GeneSetCollection(all.sets)
+```
+
+### Now model cell type rankings using AUCell package function
+
+```{r}
+rankings <- AUCell_buildRankings(counts(lett.sce),
+                                 plotStats=FALSE, verbose=FALSE)
+### Calculate AUC curves for each cell taking our markers
+cell.aucs <- AUCell_calcAUC(all.sets, rankings)
+results <- t(assay(cell.aucs))
+str(results)
+```
+
+### compare new cell projection and Monnaco Immune Data 
+
+```{r}
+new.labels <- colnames(results)[max.col(results)]
+tab <- table(new.labels, lett.sce$MonacoImmuneData)
+tab
+
+```
+We can see that few other cell types likely got mislabeled as MAIT cells
+
+### Assign our new labels to colData of lett.sce
+
+```{r}
+
+class(new.labels)
+new_labels_df <- DataFrame(new.labels)
+class(new_labels_df)
+# Now assign the DataFrame to colData
+colData(lett.sce) <- new_labels_df
+lett.sce$AUCell_cells <- lett.sce$new.labels
+
+```
+
+### Let's plot newly assigned MAIT labels on UMAP
+
+```{r, fig.height= 6, fig.width= 8}
+plotUMAP(lett.sce, colour_by = "AUCell_cells", point_size = 1.0)
+
+```
+
+### Now we calculate the amount of MAIT cells and their proportion to all T cells
+
+```{r}
+MAIT_cell_values <- colData(lett.sce)$AUCell_cells 
+value_counts <- table(MAIT_cell_values)
+value_counts
+percent3 <- round((value_counts[1] /4375 * 100),1)
+```
+
+We output these results 
+
+```{r}
+message("Number of MAIT cells equals ", value_counts[1])
+message("Number of all T cells equals ", 4375)
+message("Persentage of MAIT cells out of all T cells found with this method of annotation equals ", percent3)
+
+```
+
+### Conclusion
