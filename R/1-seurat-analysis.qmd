@@ -185,3 +185,12 @@ DimPlot(data, reduction = "umap", group.by = "RNA_snn_res.0.5")
 data
 #saveRDS(data, file = "./../output/Garner.seurat.2exp.liver.mait_analyzed.rds")
 ```
+
+
+<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" >Session Information</button><div id="collapseOne" class="accordion-collapse collapse"><div>
+
+```{r}
+sessionInfo()
+```
+
+</div></div>
