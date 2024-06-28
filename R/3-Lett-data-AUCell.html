@@ -248,7 +248,7 @@ background: #f0f3f5;
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(results)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code> num [1:6724, 1:2] 0.2142 0.136 0.0543 0.1457 0.0626 ...
+<pre><code> num [1:6724, 1:2] 0.216 0.131 0.05 0.151 0.077 ...
  - attr(*, "dimnames")=List of 2
   ..$ cells    : chr [1:6724] "BSSE_QGF_176995-AAACCCAAGACTCCGC" "BSSE_QGF_176995-AAACCCAAGATACAGT" "BSSE_QGF_176995-AAACCCAAGGCTTAAA" "BSSE_QGF_176995-AAACCCAGTAACTTCG" ...
   ..$ gene sets: chr [1:2] "MAIT" "Tmem"</code></pre>
@@ -267,12 +267,12 @@ background: #f0f3f5;
 <div class="cell-output cell-output-stdout">
 <pre><code>          
 new.labels B cells Basophils CD4+ T cells CD8+ T cells Dendritic cells
-      MAIT       1         0            5           12               3
-      Tmem      57         2            3          507             133
+      MAIT       1         0            4           12               3
+      Tmem      57         2            4          507             133
           
 new.labels Monocytes NK cells Progenitors T cells
-      MAIT         0       75           2     520
-      Tmem        16     1575          11    3802</code></pre>
+      MAIT         0       75           1     519
+      Tmem        16     1575          12    3803</code></pre>
 </div>
 </div>
 <p>We can see that few other cell types likely got mislabeled as MAIT cells</p>
@@ -327,11 +327,11 @@ attr(,"package")
 <div class="cell-output cell-output-stdout">
 <pre><code>MAIT_cell_values
 MAIT Tmem 
- 618 6106 </code></pre>
+ 615 6109 </code></pre>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>percent3 <span class="ot">&lt;-</span> <span class="fu">round</span>((value_counts[<span class="dv">1</span>] <span class="sc">/</span><span class="dv">4375</span> <span class="sc">*</span> <span class="dv">100</span>),<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>percent3 <span class="ot">&lt;-</span> <span class="fu">round</span>((value_counts[<span class="dv">1</span>] <span class="sc">/</span><span class="dv">4899</span> <span class="sc">*</span> <span class="dv">100</span>),<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>We output these results</p>
@@ -341,21 +341,21 @@ MAIT Tmem
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Number of MAIT cells equals "</span>, value_counts[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Number of MAIT cells equals 618</code></pre>
+<pre><code>Number of MAIT cells equals 615</code></pre>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Number of all T cells equals "</span>, <span class="dv">4375</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Number of all T cells equals "</span>, <span class="dv">4899</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Number of all T cells equals 4375</code></pre>
+<pre><code>Number of all T cells equals 4899</code></pre>
 </div>
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Persentage of MAIT cells out of all T cells found with this method of annotation equals "</span>, percent3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Persentage of MAIT cells out of all T cells found with this method of annotation equals 14.1</code></pre>
+<pre><code>Persentage of MAIT cells out of all T cells found with this method of annotation equals 12.6</code></pre>
 </div>
 </div>
 </section>

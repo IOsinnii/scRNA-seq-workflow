@@ -14,6 +14,7 @@ number-sections: true
 fig-cap-location: bottom
 css: style.css
 ---
+
 ::: {.callout-note collapse="true"}
 This is a Quarto document which nicely combines both R code, its results and text explanation to enable an easy and interactive access for both learners, readers and supervisors to such analyses. To learn more about Quarto see <https://quarto.org>. By default all code lines are blended, but you can show them by clicking on the code button.
 :::
@@ -156,15 +157,17 @@ rownames(pred.Tcell))]
 # Filtering out only "T cells"
 t_cell_values <- lett.sce$singleR.labels.main
 is_t_cell <- t_cell_values == "T cells"
-t_cell_counts <- sum(is_t_cell)  # Count the number of "T cells"
-percent1 <- round((value_counts[2] /t_cell_counts * 100),1)
+is_t_cell2 <- t_cell_values == "CD4+ T cells"
+is_t_cell3 <- t_cell_values == "CD8+ T cells"
+t_cell_counts <- sum(is_t_cell) + sum(is_t_cell2) + sum(is_t_cell3) # Count the number of "T cells"
 
+percent1 <- round((value_counts[2] /t_cell_counts * 100),1)
 message("Number of MAIT cells equals ", value_counts[2])
 message("Number of all T cells equals ", t_cell_counts)
 message("Persentage of MAIT cells out of all T cells found with this method of annotation equals ", percent1)
 ```
 
-### Conclusion: 10.5 MAIT cells out of all T cells in liver
+### Conclusion: 9.4 % MAIT cells out of all T cells in liver
 
 # Analysis with SingleR and Garner et al. reference
 
@@ -276,4 +279,4 @@ message("Persentage of MAIT cells out of all T cells found with this method of a
 
 ### Conclusion
 
-It seems that we identified the position of our MAIT cells correctly, since two independent dataset projections make very similar result. Using Garner dataset we get slightly less cells identified as MAIT. There might be different reasons for this. Perhaps, batch effect is one of them.
+It seems that we identified the position of our MAIT cells correctly, since two independent dataset projections make very similar result. Using Garner dataset we get slightly less cells identified as MAIT (6.6% in contrast to 9.6%). There might be different reasons for this. Perhaps, batch effect is one of them.

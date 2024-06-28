@@ -14,9 +14,8 @@ number-sections: true
 fig-cap-location: bottom
 css: style.css
 ---
+
 # Introduction
-
-
 
 # Load data and dependencies
 
@@ -76,7 +75,7 @@ results <- t(assay(cell.aucs))
 str(results)
 ```
 
-### compare new cell projection and Monnaco Immune Data 
+### compare new cell projection and Monnaco Immune Data
 
 ```{r}
 new.labels <- colnames(results)[max.col(results)]
@@ -84,6 +83,7 @@ tab <- table(new.labels, lett.sce$MonacoImmuneData)
 tab
 
 ```
+
 We can see that few other cell types likely got mislabeled as MAIT cells
 
 ### Assign our new labels to colData of lett.sce
@@ -112,14 +112,14 @@ plotUMAP(lett.sce, colour_by = "AUCell_cells", point_size = 1.0)
 MAIT_cell_values <- colData(lett.sce)$AUCell_cells 
 value_counts <- table(MAIT_cell_values)
 value_counts
-percent3 <- round((value_counts[1] /4375 * 100),1)
+percent3 <- round((value_counts[1] /4899 * 100),1)
 ```
 
-We output these results 
+We output these results
 
 ```{r}
 message("Number of MAIT cells equals ", value_counts[1])
-message("Number of all T cells equals ", 4375)
+message("Number of all T cells equals ", 4899)
 message("Persentage of MAIT cells out of all T cells found with this method of annotation equals ", percent3)
 
 ```

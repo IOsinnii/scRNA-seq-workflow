@@ -137,7 +137,7 @@ background: #f0f3f5;
   <li><a href="#we-make-the-projection-of-all-monacoimmunedata-cell-types-on-lett-dataset" id="toc-we-make-the-projection-of-all-monacoimmunedata-cell-types-on-lett-dataset" class="nav-link" data-scroll-target="#we-make-the-projection-of-all-monacoimmunedata-cell-types-on-lett-dataset"><span class="header-section-number">3.0.3</span> We make the projection of all MonacoImmuneData cell types on Lett dataset</a></li>
   <li><a href="#next-we-want-to-do-some-adjusted-vusualizations-to-focus-only-on-mait-cells" id="toc-next-we-want-to-do-some-adjusted-vusualizations-to-focus-only-on-mait-cells" class="nav-link" data-scroll-target="#next-we-want-to-do-some-adjusted-vusualizations-to-focus-only-on-mait-cells"><span class="header-section-number">3.0.4</span> Next we want to do some adjusted vusualizations to focus only on MAIT cells</a></li>
   <li><a href="#mait-cell-counts-compared-to-total-t-cells" id="toc-mait-cell-counts-compared-to-total-t-cells" class="nav-link" data-scroll-target="#mait-cell-counts-compared-to-total-t-cells"><span class="header-section-number">3.0.5</span> MAIT cell counts compared to total T cells</a></li>
-  <li><a href="#conclusion-10.5-mait-cells-out-of-all-t-cells-in-liver" id="toc-conclusion-10.5-mait-cells-out-of-all-t-cells-in-liver" class="nav-link" data-scroll-target="#conclusion-10.5-mait-cells-out-of-all-t-cells-in-liver"><span class="header-section-number">3.0.6</span> Conclusion: 10.5 MAIT cells out of all T cells in liver</a></li>
+  <li><a href="#conclusion-9.4-mait-cells-out-of-all-t-cells-in-liver" id="toc-conclusion-9.4-mait-cells-out-of-all-t-cells-in-liver" class="nav-link" data-scroll-target="#conclusion-9.4-mait-cells-out-of-all-t-cells-in-liver"><span class="header-section-number">3.0.6</span> Conclusion: 9.4 % MAIT cells out of all T cells in liver</a></li>
   </ul></li>
   <li><a href="#analysis-with-singler-and-garner-et-al.-reference" id="toc-analysis-with-singler-and-garner-et-al.-reference" class="nav-link" data-scroll-target="#analysis-with-singler-and-garner-et-al.-reference"><span class="header-section-number">4</span> Analysis with SingleR and Garner et al.&nbsp;reference</a>
   <ul class="collapse">
@@ -371,10 +371,12 @@ Adding another scale for colour, which will replace the existing scale.</code></
 <span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Filtering out only "T cells"</span></span>
 <span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>t_cell_values <span class="ot">&lt;-</span> lett.sce<span class="sc">$</span>singleR.labels.main</span>
 <span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>is_t_cell <span class="ot">&lt;-</span> t_cell_values <span class="sc">==</span> <span class="st">"T cells"</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>t_cell_counts <span class="ot">&lt;-</span> <span class="fu">sum</span>(is_t_cell)  <span class="co"># Count the number of "T cells"</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>percent1 <span class="ot">&lt;-</span> <span class="fu">round</span>((value_counts[<span class="dv">2</span>] <span class="sc">/</span>t_cell_counts <span class="sc">*</span> <span class="dv">100</span>),<span class="dv">1</span>)</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Number of MAIT cells equals "</span>, value_counts[<span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>is_t_cell2 <span class="ot">&lt;-</span> t_cell_values <span class="sc">==</span> <span class="st">"CD4+ T cells"</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>is_t_cell3 <span class="ot">&lt;-</span> t_cell_values <span class="sc">==</span> <span class="st">"CD8+ T cells"</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>t_cell_counts <span class="ot">&lt;-</span> <span class="fu">sum</span>(is_t_cell) <span class="sc">+</span> <span class="fu">sum</span>(is_t_cell2) <span class="sc">+</span> <span class="fu">sum</span>(is_t_cell3) <span class="co"># Count the number of "T cells"</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>percent1 <span class="ot">&lt;-</span> <span class="fu">round</span>((value_counts[<span class="dv">2</span>] <span class="sc">/</span>t_cell_counts <span class="sc">*</span> <span class="dv">100</span>),<span class="dv">1</span>)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Number of MAIT cells equals "</span>, value_counts[<span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Number of MAIT cells equals 459</code></pre>
@@ -384,19 +386,19 @@ Adding another scale for colour, which will replace the existing scale.</code></
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Number of all T cells equals "</span>, t_cell_counts)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Number of all T cells equals 4375</code></pre>
+<pre><code>Number of all T cells equals 4899</code></pre>
 </div>
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Persentage of MAIT cells out of all T cells found with this method of annotation equals "</span>, percent1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Persentage of MAIT cells out of all T cells found with this method of annotation equals 10.5</code></pre>
+<pre><code>Persentage of MAIT cells out of all T cells found with this method of annotation equals 9.4</code></pre>
 </div>
 </div>
 </section>
-<section id="conclusion-10.5-mait-cells-out-of-all-t-cells-in-liver" class="level3" data-number="3.0.6">
-<h3 data-number="3.0.6" class="anchored" data-anchor-id="conclusion-10.5-mait-cells-out-of-all-t-cells-in-liver"><span class="header-section-number">3.0.6</span> Conclusion: 10.5 MAIT cells out of all T cells in liver</h3>
+<section id="conclusion-9.4-mait-cells-out-of-all-t-cells-in-liver" class="level3" data-number="3.0.6">
+<h3 data-number="3.0.6" class="anchored" data-anchor-id="conclusion-9.4-mait-cells-out-of-all-t-cells-in-liver"><span class="header-section-number">3.0.6</span> Conclusion: 9.4 % MAIT cells out of all T cells in liver</h3>
 </section>
 </section>
 <section id="analysis-with-singler-and-garner-et-al.-reference" class="level1" data-number="4">
@@ -576,20 +578,20 @@ Adding another scale for colour, which will replace the existing scale.</code></
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Number of all T cells equals "</span>, t_cell_counts)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Number of all T cells equals 4375</code></pre>
+<pre><code>Number of all T cells equals 4899</code></pre>
 </div>
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"Persentage of MAIT cells out of all T cells found with this method of annotation equals "</span>, percent2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Persentage of MAIT cells out of all T cells found with this method of annotation equals 7.4</code></pre>
+<pre><code>Persentage of MAIT cells out of all T cells found with this method of annotation equals 6.6</code></pre>
 </div>
 </div>
 </section>
 <section id="conclusion" class="level3" data-number="4.0.7">
 <h3 data-number="4.0.7" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">4.0.7</span> Conclusion</h3>
-<p>It seems that we identified the position of our MAIT cells correctly, since two independent dataset projections make very similar result. Using Garner dataset we get slightly less cells identified as MAIT. There might be different reasons for this. Perhaps, batch effect is one of them.</p>
+<p>It seems that we identified the position of our MAIT cells correctly, since two independent dataset projections make very similar result. Using Garner dataset we get slightly less cells identified as MAIT (6.6% in contrast to 9.6%). There might be different reasons for this. Perhaps, batch effect is one of them.</p>
 </section>
 </section>
 
