@@ -27,7 +27,7 @@ For more information about Seurat R package please visit a dedicated [documentat
 
 ![Seurat is a common R package for comprehensive scRNA-seq analysis](https://satijalab.org/seurat/articles/assets/seurat_banner.jpg)
 
-This is a basic Seurat analysis of scRNA-seq data downstream of CellRanger pipeline. The reference paper authors previously assembled feature count matrix, metadata and row data Seurat object and uploaded it on [GEO repository](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE238137). Analysis in this document is required before annotating specific cell types and analyzing differential gene expression. We aim to have dimensionality reduction data like tSNE or UMAP available for visualizing results further. This analysis was taken from a [youtube tutorial](https://youtu.be/5HBzgsz8qyk?si=YblbjRmzN3saHv-P) almost without modifications, but using current dataset.
+This is a basic Seurat analysis of scRNA-seq data downstream of CellRanger pipeline. The reference paper authors previously assembled feature count matrix, metadata and raw data Seurat object and uploaded it on [GEOrepository](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE238137). Analysis in this document is required before annotating specific cell types and analyzing differential gene expression. We aim to have dimensionality reduction data like tSNE or UMAP available for visualizing results further. This analysis was taken from a [youtube tutorial](https://youtu.be/5HBzgsz8qyk?si=YblbjRmzN3saHv-P) almost without modifications, but using current dataset.
 
 # Loading data and dependencies
 
@@ -186,11 +186,18 @@ data
 #saveRDS(data, file = "./../output/Garner.seurat.2exp.liver.mait_analyzed.rds")
 ```
 
+<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
 
-<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" >Session Information</button><div id="collapseOne" class="accordion-collapse collapse"><div>
+Session Information
+
+</button>
+
+::: {#collapseOne .accordion-collapse .collapse}
+<div>
 
 ```{r}
 sessionInfo()
 ```
 
-</div></div>
+</div>
+:::

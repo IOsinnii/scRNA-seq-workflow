@@ -26,19 +26,14 @@ Here we apply AUCell package from Bioconductor library in order to find MAIT cel
 # Load data and dependencies
 
 ```{r, warning= FALSE, message= FALSE, echo= TRUE}
-getwd()
 library(SingleCellExperiment)
-library(SummarizedExperiment)
-library(RSQLite)
 library(AUCell)
-library(ggplot2)
-library(RColorBrewer)
 library(tidyverse)
-library(readxl)
 library(scater)
 library(uwot)
 library(GSEABase)
 library(Seurat)
+library(readxl)
 ```
 
 ### Load previously processed Guillaums dataset, check cells on UMAP. 
@@ -48,8 +43,6 @@ We can see many cell types annotated by authors in original publication
 ```{r, warning= FALSE, message= FALSE, echo= TRUE, fig.height= 6, fig.width= 8}
 Gil.seurat <- readRDS("./../input/Gil_analyzed.rds")
 Gil.seurat
-# rm(Gil.seurat)
-# lett.sce$MonacoImmuneData <- lett.sce@colData@listData[["cellReferences_celldex_MonacoImmuneData"]]@listData[["labels"]]
 
 DimPlot(Gil.seurat, reduction = "umap", group.by = "annot", pt.size = 1.0)
 ```
@@ -89,7 +82,6 @@ all.sets <- GeneSetCollection(all.sets)
 ```{r}
 rankings <- AUCell_buildRankings(counts(Gil.sce),
                                  plotStats=FALSE, verbose=FALSE)
-#rm(rankings)
 ### Calculate AUC curves for each cell taking our markers
 cell.aucs <- AUCell_calcAUC(all.sets, rankings)
 results <- t(assay(cell.aucs))
@@ -127,6 +119,8 @@ plotUMAP(Gil.sce, colour_by = "AUCell_cells", point_size = 1.0)
 Comparing the native cell annotations and new annotations I see a few major problems here. First, T mem cell get spilled over to those previously labeled as Mono-derived and NK cells. Next MAIT cells get imposed on a subset of those previously labeled as circulating NKT/NK cells and some others. Hepatocytes seem to be roughly labeled similarly as in original analysis. 
 
 So further analysis is needed to refine these results. Perhaps, one would need to cross-check between gene markers sets we chose and the sets derived from other databases, especially dedicated to immune cells. 
+
+<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
 
 Session Information
 
