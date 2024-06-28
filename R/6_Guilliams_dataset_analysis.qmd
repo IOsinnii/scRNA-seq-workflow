@@ -1,0 +1,143 @@
+---
+title: "Manual MAIT and other liver cell annotation using AUCell package and Guillaums dataset"
+subtitle: "scRNA-seq workflow series part 6" 
+title-block-banner: "#f0f3f5"
+title-block-banner-color: "black"
+author: "Ivan Osinnii"
+date: "28 June 2024"
+format: html
+code-fold: true
+editor: visual
+toc: true
+toc-location: left
+number-sections: true
+fig-cap-location: bottom
+css: style.css
+---
+
+# Introduction
+
+The dataset is consisting of Liver CD45+ and CD45- cells derived from healthy and obese humans described in [Guilliams M, Bonnardel J, Haest B, Vanderborght B et al. Spatial proteogenomics reveals distinct and evolutionarily conserved hepatic macrophage niches. Cell 2022](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE192740).
+
+GSE192740_seuratObj_humanRNAseq.rds.gz file was downloaded, further processed with the Seurat workflow in R and saved as an intermediate .rds file containing native cell annotation, clustering and dim reductions.
+
+Here we apply AUCell package from Bioconductor library in order to find MAIT cells within natively annotated T cells together with other cell types. We are also specifically interested in hepatocytes.
+
+# Load data and dependencies
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE}
+getwd()
+library(SingleCellExperiment)
+library(SummarizedExperiment)
+library(RSQLite)
+library(AUCell)
+library(ggplot2)
+library(RColorBrewer)
+library(tidyverse)
+library(readxl)
+library(scater)
+library(uwot)
+library(GSEABase)
+library(Seurat)
+```
+
+### Load previously processed Guillaums dataset, check cells on UMAP. 
+
+We can see many cell types annotated by authors in original publication
+
+```{r, warning= FALSE, message= FALSE, echo= TRUE, fig.height= 6, fig.width= 8}
+Gil.seurat <- readRDS("./../input/Gil_analyzed.rds")
+Gil.seurat
+# rm(Gil.seurat)
+# lett.sce$MonacoImmuneData <- lett.sce@colData@listData[["cellReferences_celldex_MonacoImmuneData"]]@listData[["labels"]]
+
+DimPlot(Gil.seurat, reduction = "umap", group.by = "annot", pt.size = 1.0)
+```
+### Convert Seurat object to SingleCellExperiment
+
+We remove parent objects to save RAM memory for further operations
+```{r}
+sce_obj <- as.SingleCellExperiment(Gil.seurat)
+Gil.sce <- sce_obj
+rm(Gil.seurat)
+rm(sce_obj)
+```
+
+
+### Load the list of MAIT and other marker genes. 
+
+MAIT markers were taken from  [this paper](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE238137) and the rest of the markers were taken from [PanglaoDB database](https://www.panglaodb.se/markers.html?cell_type=%27Kupffer%20cells%27)
+
+```{r}
+genes <-read_excel("./../input/CellMarkerMAITcells.xlsx", sheet = 2, col_names = TRUE) ## Garner and Pangao cell markers list
+
+```
+
+# Analysis
+
+### Transform MAIT marker list into GeneSet object using GSEABase functions
+
+```{r}
+all.sets <- lapply(names(genes), function(x) {
+  GeneSet(genes[[x]], setName=x)        
+})
+all.sets <- GeneSetCollection(all.sets)
+```
+
+### Now model cell type rankings using AUCell package function
+
+```{r}
+rankings <- AUCell_buildRankings(counts(Gil.sce),
+                                 plotStats=FALSE, verbose=FALSE)
+#rm(rankings)
+### Calculate AUC curves for each cell taking our markers
+cell.aucs <- AUCell_calcAUC(all.sets, rankings)
+results <- t(assay(cell.aucs))
+```
+
+### Compare new cell projection and native cell annotations
+
+```{r}
+new.labels <- colnames(results)[max.col(results)]
+
+tab <- table(new.labels, Gil.sce$annot)
+tab
+```
+
+We can see that many other cell types got mislabeled as MAIT and Tmem cells. This may be due to the batch effect between reference datasets and current data
+
+### Assign our new labels to colData of the SCE object
+
+```{r}
+new_labels_df <- DataFrame(new.labels)
+# Now assign the DataFrame to colData
+colData(Gil.sce) <- new_labels_df
+Gil.sce$AUCell_cells <- Gil.sce$new.labels
+```
+
+### Let's plot newly assigned cell labels on UMAP
+
+```{r, fig.height= 6, fig.width= 8}
+plotUMAP(Gil.sce, colour_by = "AUCell_cells", point_size = 1.0)
+
+```
+
+### Conclusion
+
+Comparing the native cell annotations and new annotations I see a few major problems here. First, T mem cell get spilled over to those previously labeled as Mono-derived and NK cells. Next MAIT cells get imposed on a subset of those previously labeled as circulating NKT/NK cells and some others. Hepatocytes seem to be roughly labeled similarly as in original analysis. 
+
+So further analysis is needed to refine these results. Perhaps, one would need to cross-check between gene markers sets we chose and the sets derived from other databases, especially dedicated to immune cells. 
+
+Session Information
+
+</button>
+
+::: {#collapseOne .accordion-collapse .collapse}
+<div>
+
+```{r}
+sessionInfo()
+```
+
+</div>
+:::
