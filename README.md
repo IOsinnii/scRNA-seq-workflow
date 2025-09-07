@@ -1,6 +1,6 @@
 # scRNA-seq-workflow
- The repository containg different scRNA-seq analyses for merely demonstration purposes
-[iosinni.github.io/scRNA-seq-workflow/R/1-seurat-analysis.html](https://iosinnii.github.io/scRNA-seq-workflow/R/1-seurat-analysis.html)
+This repository contains different scRNA-seq analyses conducted in 2023-2024 for a postdoc in immunology for merely demonstration purposes <br>
+[iosinnii.github.io/scRNA-seq-workflow/R/1-seurat-analysis.html](https://iosinnii.github.io/scRNA-seq-workflow/R/1-seurat-analysis.html) - basic Seurat object QC, filtration, dimensional reduction and visualization
 ## R
 
 This folder contains:<br>
