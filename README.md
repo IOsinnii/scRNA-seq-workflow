@@ -1,6 +1,6 @@
 # scRNA-seq-workflow
  The repository containg different scRNA-seq analyses for merely demonstration purposes
-
+iosinni.github.io/scRNA-seq-workflow/R/1-seurat analysis.html
 ## R
 
 This folder contains:<br>
